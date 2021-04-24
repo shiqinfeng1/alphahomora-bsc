@@ -25,8 +25,8 @@ def deploy(deployer):
         bank_impl, proxy_admin, bank_impl.initialize.encode_input(bank_config), {'from': deployer})
     bank = interface.IAny(bank)
 
-    # oracle = SimplePriceOracle.deploy({'from': deployer})
-    oracle = SimplePriceOracle.at('0xc0d0A48F8Feec21B60Cf8BA2A372199ebf3B740a')
+    oracle = SimplePriceOracle.deploy({'from': deployer})
+    # oracle = SimplePriceOracle.at('0xc0d0A48F8Feec21B60Cf8BA2A372199ebf3B740a')
 
     # strats
     add_strat = StrategyAllBNBOnly.deploy(router_address, {'from': deployer})
@@ -225,9 +225,9 @@ def test_token(bank, registry, add_strat, liq_strat, rem_strat, token_name):
 
 
 def main():
-    deployer = accounts[8]
-    # deployer = accounts.at('0x4D4DA0D03F6f087697bbf13378a21E8ff6aF1a58', force=True)
-    # deployer = accounts.load('')
+    # deployer = accounts[0]
+    # deployer = accounts.at('0x1dcEf12e93b0aBF2d36f723e8B59Cc762775d513', force=True)
+    deployer = accounts.add('eb555556ca1b0a95142fa46019afa8451eb247dee035992742d60aa44316252f')
 
     # deploy bank
     bank, add_strat, liq_strat, rem_strat, bank_config, goblin_config, oracle = deploy(deployer)

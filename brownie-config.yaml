@@ -5,6 +5,11 @@ compiler:
     optimizer:
       enabled: true
       runs: 200
-    remappings: null
+    remappings: 
+      - "OpenZeppelin/openzeppelin-contracts@2.3.0/contracts=/Users/shiqinfeng/Documents/smart_contracts/alphahomora-bsc/node_modules/openzeppelin230"
+      - "OpenZeppelin/openzeppelin-contracts@3.2.0/contracts=/Users/shiqinfeng/Documents/smart_contracts/alphahomora-bsc/node_modules/openzeppelin320"
+      - "Uniswap/uniswap-v2-core@1.0.1=/Users/shiqinfeng/Documents/smart_contracts/alphahomora-bsc/node_modules/uniswapv2101"
+      - "Synthetixio/synthetix@2.28.4-beta=/Users/shiqinfeng/Documents/smart_contracts/alphahomora-bsc/node_modules/synthetix"
+      
   vyper:
     version: null

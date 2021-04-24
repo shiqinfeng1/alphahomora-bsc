@@ -1,0 +1,11 @@
+live:
+- name: heco
+  networks:
+  - chainid: 256
+    host: https://http-testnet.hecochain.com
+    id: heco-test
+    name: test
+  - chainid: 128
+    host: https://http-mainnet-node.huobichain.com
+    id: heco-main
+    name: Mainnet
