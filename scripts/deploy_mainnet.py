@@ -18,7 +18,7 @@ def deploy(deployer):
     # kill bps 100 (1%)
     print('部署 bank_config...')
     bank_config = ConfigurableInterestBankConfig.deploy(
-        10**16, 2000, 100, triple_slope_model, {'from': deployer, 'gas_price':1000000000})
+        10*18, 2000, 100, triple_slope_model, {'from': deployer, 'gas_price':1000000000})
     print('部署 ProxyAdminImpl...')
     proxy_admin = ProxyAdminImpl.deploy({'from': deployer, 'gas_price':1000000000})
     print('部署 Bank...')
@@ -159,20 +159,20 @@ def test_token_1(bank, registry, token_name):
     bob = accounts.add('7b9009958a83807bbe38bf35f451ff0c4bf4d926cee63dd07658762db58ceba4')
 
 
-    bank.deposit({'from': bob, 'value': '0.001 ether', 'gas_price':1000000000})
+    bank.deposit({'from': bob, 'value': '2 ether', 'gas_price':1000000000})
 
     prevBNBBal = alice.balance()
 
     bank.work(0, 
         registry[token_name]['goblin'], 
-        10**16, 0, 
+        10*18, 0, 
         eth_abi.encode_abi(
             ['address', 'bytes'], 
             [
                 registry[token_name]['two_side'].address,
                 eth_abi.encode_abi(['address', 'uint256', 'uint256'], [registry[token_name]['token'], 0, 0])
             ]
-        ), {'from': alice, 'value': '0.0005 ether', 'gas_price':1000000000})
+        ), {'from': alice, 'value': '1 ether', 'gas_price':1000000000})
 
     curBNBBal = alice.balance()
 
@@ -197,12 +197,12 @@ def test_token(bank, registry, add_strat, liq_strat, rem_strat, token_name):
     print('fToken', fToken)
     print('add_strat_2', add_strat_2)
 
-    bank.deposit({'from': bob, 'value': '0.001 ether', 'gas_price':1000000000})
+    bank.deposit({'from': bob, 'value': '2 ether', 'gas_price':1000000000})
 
     prevBNBBal = alice.balance()
 
-    bank.work(0, goblin, 10**16, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat_2.address,
-                                                                              eth_abi.encode_abi(['address', 'uint256', 'uint256'], [fToken, 0, 0])]), {'from': alice, 'value': '0.0005 ether', 'gas_price':1000000000})
+    bank.work(0, goblin, 10**18, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat_2.address,
+                                                                              eth_abi.encode_abi(['address', 'uint256', 'uint256'], [fToken, 0, 0])]), {'from': alice, 'value': '1 ether', 'gas_price':1000000000})
 
     curBNBBal = alice.balance()
 
@@ -224,11 +224,11 @@ def test_token(bank, registry, add_strat, liq_strat, rem_strat, token_name):
     print('alice pos', bank.positionInfo(pos_id))
 
     if token_name == 'sashimi':
-        bank.work(0, goblin, 10**16, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat_2.address,
-                                                                                  eth_abi.encode_abi(['address', 'uint256', 'uint256'], [fToken, 0, 0])]), {'from': alice, 'value': '0.0005 ether', 'gas_price':1000000000})
+        bank.work(0, goblin, 10*18, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat_2.address,
+                                                                                  eth_abi.encode_abi(['address', 'uint256', 'uint256'], [fToken, 0, 0])]), {'from': alice, 'value': '1 ether', 'gas_price':1000000000})
     else:
-        bank.work(0, goblin, 10**16, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat.address,
-                                                                                  eth_abi.encode_abi(['address', 'uint256'], [fToken, 0])]), {'from': alice, 'value': '0.0005 ether', 'gas_price':1000000000})
+        bank.work(0, goblin, 10**18, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat.address,
+                                                                                  eth_abi.encode_abi(['address', 'uint256'], [fToken, 0])]), {'from': alice, 'value': '1 ether', 'gas_price':1000000000})
 
     pos_id = bank.nextPositionID() - 1
 
@@ -239,8 +239,8 @@ def test_token(bank, registry, add_strat, liq_strat, rem_strat, token_name):
     goblin.reinvest({'from': alice})
 
     print('liquidating')
-    bank.work(0, goblin, 10**16, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat_2.address,
-                                                                              eth_abi.encode_abi(['address', 'uint256', 'uint256'], [fToken, 0, 0])]), {'from': alice, 'value': '0.001 ether', 'gas_price':1000000000})
+    bank.work(0, goblin, 10**18, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat_2.address,
+                                                                              eth_abi.encode_abi(['address', 'uint256', 'uint256'], [fToken, 0, 0])]), {'from': alice, 'value': '1 ether', 'gas_price':1000000000})
 
     pos_id = bank.nextPositionID() - 1
 
