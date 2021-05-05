@@ -19,7 +19,7 @@ contract IMasterChef {
     uint accCakePerShare; // Accumulated CAKEs per share, times 1e12. See below.
   }
 
-  address public cake;
+  address public sashimi;
 
   // Info of each user that stakes LP tokens.
   mapping(uint => PoolInfo) public poolInfo;

@@ -103,13 +103,13 @@ contract Bank is Initializable, ERC20, ReentrancyGuardUpgradeSafe, Governable {
   }
 
   /// @dev Return the total BNB entitled to the token holders. Be careful of unaccrued interests.
-  function totalBNB() public view returns (uint) {
+  function totalHT() public view returns (uint) {
     return address(this).balance.add(glbDebtVal).sub(reservePool);
   }
 
   /// @dev Add more BNB to the bank. Hope to get some good returns.
   function deposit() external payable accrue(msg.value) nonReentrant {
-    uint total = totalBNB().sub(msg.value);
+    uint total = totalHT().sub(msg.value);
     uint share = total == 0 ? msg.value : msg.value.mul(totalSupply()).div(total);
     _mint(msg.sender, share);
     require(totalSupply() >= 1e17, 'deposit: total supply too low');
@@ -117,7 +117,7 @@ contract Bank is Initializable, ERC20, ReentrancyGuardUpgradeSafe, Governable {
 
   /// @dev Withdraw BNB from the bank by burning the share tokens.
   function withdraw(uint share) external accrue(0) nonReentrant {
-    uint amount = share.mul(totalBNB()).div(totalSupply());
+    uint amount = share.mul(totalHT()).div(totalSupply());
     _burn(msg.sender, share);
     SafeToken.safeTransferBNB(msg.sender, amount);
     uint supply = totalSupply();

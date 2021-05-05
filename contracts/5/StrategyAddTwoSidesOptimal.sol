@@ -2,10 +2,15 @@ pragma solidity 0.5.16;
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/ownership/Ownable.sol';
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/math/SafeMath.sol';
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/utils/ReentrancyGuard.sol';
-import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Factory.sol';
-import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Pair.sol';
+// import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Factory.sol';
+// import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Pair.sol';
+// import 'Uniswap/uniswap-v2-core@1.0.1/contracts/libraries/Math.sol';
+// import './uniswap/IUniswapV2Router02.sol';
+import './interfaces/IMdexFactory.sol';
+import './interfaces/IMdexPair.sol';
 import 'Uniswap/uniswap-v2-core@1.0.1/contracts/libraries/Math.sol';
-import './uniswap/IUniswapV2Router02.sol';
+import './mdex/IMdexRouter.sol';
+
 import './SafeToken.sol';
 import './Strategy.sol';
 
@@ -13,22 +18,22 @@ contract StrategyAddTwoSidesOptimal is Ownable, ReentrancyGuard, Strategy {
   using SafeToken for address;
   using SafeMath for uint;
 
-  IUniswapV2Factory public factory;
-  IUniswapV2Router02 public router;
-  address public wbnb;
+  IMdexFactory public factory;
+  IMdexRouter public router;
+  address public wht;
   address public goblin;
   address public fToken_;
 
   /// @dev Create a new add two-side optimal strategy instance.
   /// @param _router The Uniswap router smart contract.
   constructor(
-    IUniswapV2Router02 _router,
+    IMdexRouter _router,
     address _goblin,
     address _fToken
   ) public {
-    factory = IUniswapV2Factory(_router.factory());
+    factory = IMdexFactory(_router.factory());
     router = _router;
-    wbnb = _router.WETH();
+    wht = _router.WHT();
     goblin = _goblin;
     fToken_ = _fToken;
   }
@@ -103,7 +108,7 @@ contract StrategyAddTwoSidesOptimal is Ownable, ReentrancyGuard, Strategy {
     // 1. Find out what farming token we are dealing with.
     (address fToken, uint fAmount, uint minLPAmount) = abi.decode(data, (address, uint, uint));
     require(fToken == fToken_, 'token mismatched');
-    IUniswapV2Pair lpToken = IUniswapV2Pair(factory.getPair(fToken, wbnb));
+    IMdexPair lpToken = IMdexPair(factory.getPair(fToken, wht));
     // 2. Compute the optimal amount of BNB and fToken to be converted.
     if (fAmount > 0) {
       fToken.safeTransferFrom(user, address(this), fAmount);
@@ -113,14 +118,14 @@ contract StrategyAddTwoSidesOptimal is Ownable, ReentrancyGuard, Strategy {
     bool isReversed;
     {
       (uint r0, uint r1, ) = lpToken.getReserves();
-      (uint ethReserve, uint fReserve) = lpToken.token0() == wbnb ? (r0, r1) : (r1, r0);
+      (uint ethReserve, uint fReserve) = lpToken.token0() == wht ? (r0, r1) : (r1, r0);
       (swapAmt, isReversed) = optimalDeposit(ethBalance, fToken.myBalance(), ethReserve, fReserve);
     }
     // 3. Convert between BNB and farming tokens
     fToken.safeApprove(address(router), 0);
     fToken.safeApprove(address(router), uint(-1));
     address[] memory path = new address[](2);
-    (path[0], path[1]) = isReversed ? (fToken, wbnb) : (wbnb, fToken);
+    (path[0], path[1]) = isReversed ? (fToken, wht) : (wht, fToken);
     if (isReversed) {
       router.swapExactTokensForETH(swapAmt, 0, path, address(this), now); // farming tokens to BNB
     } else {

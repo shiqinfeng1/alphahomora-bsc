@@ -3,10 +3,15 @@ import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/ownership/Ownable.so
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/math/SafeMath.sol';
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/utils/ReentrancyGuard.sol';
 import './mstable/IMStableStakingRewards.sol';
-import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Factory.sol';
-import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Pair.sol';
+// import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Factory.sol';
+// import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Pair.sol';
+// import 'Uniswap/uniswap-v2-core@1.0.1/contracts/libraries/Math.sol';
+// import './uniswap/IUniswapV2Router02.sol';
+import './interfaces/IMdexFactory.sol';
+import './interfaces/IMdexPair.sol';
 import 'Uniswap/uniswap-v2-core@1.0.1/contracts/libraries/Math.sol';
-import './uniswap/IUniswapV2Router02.sol';
+import './mdex/IMdexRouter.sol';
+
 import './Strategy.sol';
 import './SafeToken.sol';
 import './Goblin.sol';
@@ -26,10 +31,10 @@ contract MStableGoblin is Ownable, ReentrancyGuard, Goblin {
 
   /// @notice Immutable variables
   IMStableStakingRewards public staking;
-  IUniswapV2Factory public factory;
-  IUniswapV2Router02 public router;
-  IUniswapV2Pair public lpToken;
-  address public wbnb;
+  IMdexFactory public factory;
+  IMdexRouter public router;
+  IMdexPair public lpToken;
+  address public wht;
   address public mta;
   address public operator;
 
@@ -44,19 +49,19 @@ contract MStableGoblin is Ownable, ReentrancyGuard, Goblin {
   constructor(
     address _operator,
     IMStableStakingRewards _staking,
-    IUniswapV2Router02 _router,
+    IMdexRouter _router,
     address _mta,
     Strategy _addStrat,
     Strategy _liqStrat,
     uint _reinvestBountyBps
   ) public {
     operator = _operator;
-    wbnb = _router.WETH();
+    wht = _router.WHT();
     staking = _staking;
     router = _router;
-    factory = IUniswapV2Factory(_router.factory());
+    factory = IMdexFactory(_router.factory());
     mta = _mta;
-    lpToken = IUniswapV2Pair(factory.getPair(wbnb, _mta));
+    lpToken = IMdexPair(factory.getPair(wht, _mta));
     addStrat = _addStrat;
     liqStrat = _liqStrat;
     okStrats[address(addStrat)] = true;
@@ -162,7 +167,7 @@ contract MStableGoblin is Ownable, ReentrancyGuard, Goblin {
     uint lpSupply = lpToken.totalSupply(); // Ignore pending mintFee as it is insignificant
     // 2. Get the pool's total supply of WBNB and farming token.
     (uint r0, uint r1, ) = lpToken.getReserves();
-    (uint totalWBNB, uint totalMTA) = lpToken.token0() == wbnb ? (r0, r1) : (r1, r0);
+    (uint totalWBNB, uint totalMTA) = lpToken.token0() == wht ? (r0, r1) : (r1, r0);
     // 3. Convert the position's LP tokens to the underlying assets.
     uint userWBNB = lpBalance.mul(totalWBNB).div(lpSupply);
     uint userMTA = lpBalance.mul(totalMTA).div(lpSupply);

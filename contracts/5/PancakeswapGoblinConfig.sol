@@ -2,13 +2,14 @@ pragma solidity 0.5.16;
 pragma experimental ABIEncoderV2;
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/ownership/Ownable.sol';
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/math/SafeMath.sol';
-import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Pair.sol';
+// import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Pair.sol';
+import './interfaces/IMdexPair.sol';
 import './GoblinConfig.sol';
 import './PriceOracle.sol';
 import './SafeToken.sol';
 
 interface IPancakeswapGoblin {
-  function lpToken() external view returns (IUniswapV2Pair);
+  function lpToken() external view returns (IMdexPair);
 }
 
 contract PancakeswapGoblinConfig is Ownable, GoblinConfig {
@@ -50,7 +51,7 @@ contract PancakeswapGoblinConfig is Ownable, GoblinConfig {
 
   /// @dev Return whether the given goblin is stable, presumably not under manipulation.
   function isStable(address goblin) public view returns (bool) {
-    IUniswapV2Pair lp = IPancakeswapGoblin(goblin).lpToken();
+    IMdexPair lp = IPancakeswapGoblin(goblin).lpToken();
     address token0 = lp.token0();
     address token1 = lp.token1();
     // 1. Check that reserves and balances are consistent (within 1%)

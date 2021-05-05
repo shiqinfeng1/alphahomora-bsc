@@ -2,9 +2,13 @@ pragma solidity 0.5.16;
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/ownership/Ownable.sol';
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/utils/ReentrancyGuard.sol';
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/math/SafeMath.sol';
-import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Factory.sol';
-import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Pair.sol';
-import './uniswap/IUniswapV2Router02.sol';
+// import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IMdexFactory.sol';
+// import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IMdexPair.sol';
+// import './uniswap/IMdexRouter.sol';
+import './interfaces/IMdexFactory.sol';
+import './interfaces/IMdexPair.sol';
+import './mdex/IMdexRouter.sol';
+
 import './SafeToken.sol';
 import './Strategy.sol';
 
@@ -12,18 +16,18 @@ contract StrategyWithdrawMinimizeTrading is Ownable, ReentrancyGuard, Strategy {
   using SafeToken for address;
   using SafeMath for uint;
 
-  IUniswapV2Factory public factory;
-  IUniswapV2Router02 public router;
+  IMdexFactory public factory;
+  IMdexRouter public router;
   address public wbnb;
 
   mapping(address => bool) public whitelistedTokens;
 
   /// @dev Create a new withdraw minimize trading strategy instance.
   /// @param _router The Uniswap router smart contract.
-  constructor(IUniswapV2Router02 _router) public {
-    factory = IUniswapV2Factory(_router.factory());
+  constructor(IMdexRouter _router) public {
+    factory = IMdexFactory(_router.factory());
     router = _router;
-    wbnb = _router.WETH();
+    wbnb = _router.WHT();
   }
 
   /// @dev Set whitelisted tokens
@@ -51,7 +55,7 @@ contract StrategyWithdrawMinimizeTrading is Ownable, ReentrancyGuard, Strategy {
     // 1. Find out what farming token we are dealing with.
     (address fToken, uint minFToken) = abi.decode(data, (address, uint));
     require(whitelistedTokens[fToken], 'token not whitelisted');
-    IUniswapV2Pair lpToken = IUniswapV2Pair(factory.getPair(fToken, wbnb));
+    IMdexPair lpToken = IMdexPair(factory.getPair(fToken, wbnb));
     // 2. Remove all liquidity back to BNB and farming tokens.
     lpToken.approve(address(router), uint(-1));
     router.removeLiquidityETH(fToken, lpToken.balanceOf(address(this)), 0, 0, address(this), now);

@@ -3,10 +3,15 @@ import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/ownership/Ownable.so
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/math/SafeMath.sol';
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/utils/ReentrancyGuard.sol';
 import 'OpenZeppelin/openzeppelin-contracts@2.3.0/contracts/token/ERC20/IERC20.sol';
-import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Factory.sol';
-import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Pair.sol';
+// import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Factory.sol';
+// import 'Uniswap/uniswap-v2-core@1.0.1/contracts/interfaces/IUniswapV2Pair.sol';
+// import 'Uniswap/uniswap-v2-core@1.0.1/contracts/libraries/Math.sol';
+// import './uniswap/IUniswapV2Router02.sol';
+import './interfaces/IMdexFactory.sol';
+import './interfaces/IMdexPair.sol';
 import 'Uniswap/uniswap-v2-core@1.0.1/contracts/libraries/Math.sol';
-import './uniswap/IUniswapV2Router02.sol';
+import './mdex/IMdexRouter.sol';
+
 import './Strategy.sol';
 import './SafeToken.sol';
 import './Goblin.sol';
@@ -25,12 +30,12 @@ contract PancakeswapGoblin is Ownable, ReentrancyGuard, Goblin {
 
   /// @notice Immutable variables
   IMasterChef public masterChef;
-  IUniswapV2Factory public factory;
-  IUniswapV2Router02 public router;
-  IUniswapV2Pair public lpToken;
-  address public wbnb;
+  IMdexFactory public factory;
+  IMdexRouter public router;
+  IMdexPair public lpToken;
+  address public wht;
   address public fToken;
-  address public cake;
+  IERC20 public sashimi;
   address public operator;
   uint public pid;
 
@@ -45,25 +50,25 @@ contract PancakeswapGoblin is Ownable, ReentrancyGuard, Goblin {
   constructor(
     address _operator,
     IMasterChef _masterChef,
-    IUniswapV2Router02 _router,
+    IMdexRouter _router,
     uint _pid,
     Strategy _addStrat,
     Strategy _liqStrat,
     uint _reinvestBountyBps
   ) public {
     operator = _operator;
-    wbnb = _router.WETH();
+    wht = _router.WHT();
     masterChef = _masterChef;
     router = _router;
-    factory = IUniswapV2Factory(_router.factory());
+    factory = IMdexFactory(_router.factory());
     // Get lpToken and fToken from MasterChef pool
     pid = _pid;
     (IERC20 _lpToken, , , ) = masterChef.poolInfo(_pid);
-    lpToken = IUniswapV2Pair(address(_lpToken));
+    lpToken = IMdexPair(address(_lpToken));
     address token0 = lpToken.token0();
     address token1 = lpToken.token1();
-    fToken = token0 == wbnb ? token1 : token0;
-    cake = address(masterChef.cake());
+    fToken = token0 == wht ? token1 : token0;
+    sashimi = IERC20(masterChef.sashimi());
     addStrat = _addStrat;
     liqStrat = _liqStrat;
     okStrats[address(addStrat)] = true;
@@ -72,7 +77,7 @@ contract PancakeswapGoblin is Ownable, ReentrancyGuard, Goblin {
     lpToken.approve(address(_masterChef), uint(-1)); // 100% trust in the staking pool
     lpToken.approve(address(router), uint(-1)); // 100% trust in the router
     fToken.safeApprove(address(router), uint(-1)); // 100% trust in the router
-    cake.safeApprove(address(router), uint(-1)); // 100% trust in the router
+    sashimi.approve(address(router), uint(-1)); // 100% trust in the router
   }
 
   /// @dev Require that the caller must be an EOA account to avoid flash loans.
@@ -107,15 +112,15 @@ contract PancakeswapGoblin is Ownable, ReentrancyGuard, Goblin {
   function reinvest() public onlyEOA nonReentrant {
     // 1. Withdraw all the rewards.
     masterChef.withdraw(pid, 0);
-    uint reward = cake.balanceOf(address(this));
+    uint reward = sashimi.balanceOf(address(this));
     if (reward == 0) return;
     // 2. Send the reward bounty to the caller.
     uint bounty = reward.mul(reinvestBountyBps) / 10000;
-    cake.safeTransfer(msg.sender, bounty);
+    sashimi.transfer(msg.sender, bounty);
     // 3. Convert all the remaining rewards to BNB.
     address[] memory path = new address[](2);
-    path[0] = address(cake);
-    path[1] = address(wbnb);
+    path[0] = address(sashimi);
+    path[1] = address(wht);
     router.swapExactTokensForETH(reward.sub(bounty), 0, path, address(this), now);
     // 4. Use add BNB strategy to convert all BNB to LP tokens.
     addStrat.execute.value(address(this).balance)(address(0), 0, abi.encode(fToken, 0));
@@ -173,7 +178,7 @@ contract PancakeswapGoblin is Ownable, ReentrancyGuard, Goblin {
     uint lpSupply = lpToken.totalSupply(); // Ignore pending mintFee as it is insignificant
     // 2. Get the pool's total supply of WBNB and farming token.
     (uint r0, uint r1, ) = lpToken.getReserves();
-    (uint totalWBNB, uint totalfToken) = lpToken.token0() == wbnb ? (r0, r1) : (r1, r0);
+    (uint totalWBNB, uint totalfToken) = lpToken.token0() == wht ? (r0, r1) : (r1, r0);
     // 3. Convert the position's LP tokens to the underlying assets.
     uint userWBNB = lpBalance.mul(totalWBNB).div(lpSupply);
     uint userfToken = lpBalance.mul(totalfToken).div(lpSupply);
