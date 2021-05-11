@@ -18,7 +18,7 @@ def deploy(deployer):
     # kill bps 100 (1%)
     print('部署 bank_config...')
     bank_config = ConfigurableInterestBankConfig.deploy(
-        10*18, 2000, 100, triple_slope_model, {'from': deployer, 'gas_price':1000000000})
+        10*17, 2000, 100, triple_slope_model, {'from': deployer, 'gas_price':1000000000})
     print('部署 ProxyAdminImpl...')
     proxy_admin = ProxyAdminImpl.deploy({'from': deployer, 'gas_price':1000000000})
     print('部署 Bank...')
@@ -159,20 +159,20 @@ def test_token_1(bank, registry, token_name):
     bob = accounts.add('7b9009958a83807bbe38bf35f451ff0c4bf4d926cee63dd07658762db58ceba4')
 
 
-    bank.deposit({'from': bob, 'value': '2 ether', 'gas_price':1000000000})
+    # bank.deposit({'from': bob, 'value': '0.1 ether', 'gas_price':1000000000})
 
     prevBNBBal = alice.balance()
 
     bank.work(0, 
         registry[token_name]['goblin'], 
-        10*18, 0, 
+        10**17, 0, 
         eth_abi.encode_abi(
             ['address', 'bytes'], 
             [
                 registry[token_name]['two_side'].address,
                 eth_abi.encode_abi(['address', 'uint256', 'uint256'], [registry[token_name]['token'], 0, 0])
             ]
-        ), {'from': alice, 'value': '1 ether', 'gas_price':1000000000})
+        ), {'from': alice, 'value': '0.05 ether', 'gas_price':1000000000})
 
     curBNBBal = alice.balance()
 
@@ -197,12 +197,12 @@ def test_token(bank, registry, add_strat, liq_strat, rem_strat, token_name):
     print('fToken', fToken)
     print('add_strat_2', add_strat_2)
 
-    bank.deposit({'from': bob, 'value': '2 ether', 'gas_price':1000000000})
+    bank.deposit({'from': bob, 'value': '0.1 ether', 'gas_price':1000000000})
 
     prevBNBBal = alice.balance()
 
-    bank.work(0, goblin, 10**18, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat_2.address,
-                                                                              eth_abi.encode_abi(['address', 'uint256', 'uint256'], [fToken, 0, 0])]), {'from': alice, 'value': '1 ether', 'gas_price':1000000000})
+    bank.work(0, goblin, 10**17, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat_2.address,
+                                                                              eth_abi.encode_abi(['address', 'uint256', 'uint256'], [fToken, 0, 0])]), {'from': alice, 'value': '0.05 ether', 'gas_price':1000000000})
 
     curBNBBal = alice.balance()
 
@@ -211,7 +211,7 @@ def test_token(bank, registry, add_strat, liq_strat, rem_strat, token_name):
     pos_id = bank.nextPositionID() - 1
     print('alice pos', bank.positionInfo(pos_id))
 
-    assert almostEqual(curBNBBal - prevBNBBal, -10**18), 'incorrect BNB input amount'
+    assert almostEqual(curBNBBal - prevBNBBal, -10**17), 'incorrect BNB input amount'
 
     prevBNBBal = alice.balance()
 
@@ -224,11 +224,11 @@ def test_token(bank, registry, add_strat, liq_strat, rem_strat, token_name):
     print('alice pos', bank.positionInfo(pos_id))
 
     if token_name == 'sashimi':
-        bank.work(0, goblin, 10*18, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat_2.address,
-                                                                                  eth_abi.encode_abi(['address', 'uint256', 'uint256'], [fToken, 0, 0])]), {'from': alice, 'value': '1 ether', 'gas_price':1000000000})
+        bank.work(0, goblin, 10*17, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat_2.address,
+                                                                                  eth_abi.encode_abi(['address', 'uint256', 'uint256'], [fToken, 0, 0])]), {'from': alice, 'value': '0.05 ether', 'gas_price':1000000000})
     else:
-        bank.work(0, goblin, 10**18, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat.address,
-                                                                                  eth_abi.encode_abi(['address', 'uint256'], [fToken, 0])]), {'from': alice, 'value': '1 ether', 'gas_price':1000000000})
+        bank.work(0, goblin, 10**17, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat.address,
+                                                                                  eth_abi.encode_abi(['address', 'uint256'], [fToken, 0])]), {'from': alice, 'value': '0.05 ether', 'gas_price':1000000000})
 
     pos_id = bank.nextPositionID() - 1
 
@@ -239,8 +239,8 @@ def test_token(bank, registry, add_strat, liq_strat, rem_strat, token_name):
     goblin.reinvest({'from': alice})
 
     print('liquidating')
-    bank.work(0, goblin, 10**18, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat_2.address,
-                                                                              eth_abi.encode_abi(['address', 'uint256', 'uint256'], [fToken, 0, 0])]), {'from': alice, 'value': '1 ether', 'gas_price':1000000000})
+    bank.work(0, goblin, 10**17, 0, eth_abi.encode_abi(['address', 'bytes'], [add_strat_2.address,
+                                                                              eth_abi.encode_abi(['address', 'uint256', 'uint256'], [fToken, 0, 0])]), {'from': alice, 'value': '0.05 ether', 'gas_price':1000000000})
 
     pos_id = bank.nextPositionID() - 1
 
@@ -263,14 +263,14 @@ def main():
     # 部署相关合约
     # bank, add_strat, liq_strat, rem_strat, bank_config, goblin_config, oracle = deploy(deployer)
     # 或者关联到已部署合约
-    bank_config = ConfigurableInterestBankConfig.at('0x5c1f42fDbAbcfa51862Fdf6eF9091a26B8628dA3')
-    bank = TransparentUpgradeableProxyImpl.at('0x6975cc4066a1CFff6d55109cd6AF491374ee9697')
+    bank_config = ConfigurableInterestBankConfig.at('0x50D73FF608c6a66b1c36f4a051363cC8a359621d')
+    bank = TransparentUpgradeableProxyImpl.at('0xF1FB892E5072cE129Af13a795f211598A8931132')
     bank = interface.IAny(bank)
     oracle = SimplePriceOracle.at('0xf3e2206a87014A3acE8def4Bd65BE84CC9B2b388')
-    add_strat = StrategyAllHTOnly.at('0xd15404BE2A836Ca4a4E5062971A63E71d0F18383')
-    liq_strat = StrategyLiquidate.at('0x53E423Eb378c59CA4a0Bd4df4461abc260dE6534')
-    rem_strat = StrategyWithdrawMinimizeTrading.at('0x75d1f2Aef36416f40A0449047fD12398800C581f')
-    goblin_config = PancakeswapGoblinConfig.at('0x7B060BfcF926EBdBC3b578A1b4E3e811AC530d52')
+    add_strat = StrategyAllHTOnly.at('0x7Bc24bB9da86C808cf8cBC9ED935AC61068FCD34')
+    liq_strat = StrategyLiquidate.at('0x04492d6C6bB5439e5916CC792b570DEd6a3563f6')
+    rem_strat = StrategyWithdrawMinimizeTrading.at('0x5158e8E7a7C45050Cd039802530473b01570f1f2')
+    goblin_config = PancakeswapGoblinConfig.at('0x21952994097720Db2356B73617F7d03ee9662Eaa')
     print('bank', bank.address)
     print('bank_config', bank_config.address)
     print('all ht', add_strat.address)
@@ -336,8 +336,8 @@ def main():
     #                         bank_config, goblin_config, oracle, pools)
     # 或者使用已部署的池子
     registry = {}
-    goblin = PancakeswapPool1Goblin.at('0xDA5f8fB17e2288d4ac3E1BbF0A8655065E7Fa954')
-    add_strat_2 = StrategyAddTwoSidesOptimal.at('0xA067AAE9cD2ec4b3d55B93a75f31D99756aeec13')
+    goblin = PancakeswapPool1Goblin.at('0xB67e7267fc3180679AC2C4A0C13442C15321670D')
+    add_strat_2 = StrategyAddTwoSidesOptimal.at('0xe00ff084fe9d67CA6736052aFeb00F2870315F91')
     registry['sashimi'] = {'goblin': goblin,
                                 'two_side': add_strat_2, 
                                 'token': '0xc2037C1c13dd589e0c14C699DD2498227d2172cC'}
@@ -347,35 +347,32 @@ def main():
     wht = interface.IAny(wht_address)
     fToken = interface.IAny(sashimi_address)
 
-    oracle.setPrices([wht], [fToken], [10**18 * 350], {'from': deployer, 'gas_price':1000000000})
+    # oracle.setPrices([wht], [fToken], [10**18 * 300], {'from': deployer, 'gas_price':1000000000})
     
+    # # set whitelist tokens to add_strat (no sashimi)
+    # add_fTokens = list(map(lambda pool: pool['token'], pools[1:]))
+    # print('add_fTokens:', add_fTokens)
+    # print('add_strat.setWhitelistTokens ...')
+    # add_strat.setWhitelistTokens(add_fTokens, [True] * len(add_fTokens), {'from': deployer, 'gas_price':1000000000})
 
-    # set whitelist tokens to add_strat (no sashimi)
-    add_fTokens = list(map(lambda pool: pool['token'], pools[1:]))
-    print('add_fTokens:', add_fTokens)
-    print('add_strat.setWhitelistTokens ...')
-    add_strat.setWhitelistTokens(add_fTokens, [True] * len(add_fTokens), {'from': deployer, 'gas_price':1000000000})
-
-    # set whitelist tokens to liq_strat, rem_strat
-    fTokens = list(map(lambda pool: pool['token'], pools))
-    print('fTokens:', fTokens)
-    print('liq_strat.setWhitelistTokens ...')
-    liq_strat.setWhitelistTokens(fTokens, [True] * len(fTokens), {'from': deployer, 'gas_price':1000000000})
-    print('rem_strat.setWhitelistTokens ...')
-    rem_strat.setWhitelistTokens(fTokens, [True] * len(fTokens), {'from': deployer, 'gas_price':1000000000})
+    # # set whitelist tokens to liq_strat, rem_strat
+    # fTokens = list(map(lambda pool: pool['token'], pools))
+    # print('fTokens:', fTokens)
+    # print('liq_strat.setWhitelistTokens ...')
+    # liq_strat.setWhitelistTokens(fTokens, [True] * len(fTokens), {'from': deployer, 'gas_price':1000000000})
+    # print('rem_strat.setWhitelistTokens ...')
+    # rem_strat.setWhitelistTokens(fTokens, [True] * len(fTokens), {'from': deployer, 'gas_price':1000000000})
 
     #########################################################################
     # test work
 
-    # test_busd(bank, registry, add_strat)
-    # test_cake_2(bank, registry)
-    # test_busd_2(bank, registry)
     print('开始测试token: sashimi ...')
-    test_token_1(bank, registry, 'sashimi')  # make sure remaining debt is not too small
-    print('测试token ...')
-    test_token(bank, registry, add_strat, liq_strat, rem_strat, 'sashimi')
-    # test_token(bank, registry, add_strat, liq_strat, rem_strat, 'busd')
-    # test_token(bank, registry, add_strat, liq_strat, rem_strat, 'btcb')
-    # test_token(bank, registry, add_strat, liq_strat, rem_strat, 'eth')
-    # test_token(bank, registry, add_strat, liq_strat, rem_strat, 'alpha')
-    # test_token(bank, registry, add_strat, liq_strat, rem_strat, 'usdt')
+    print('bank.nextPositionID=',bank.nextPositionID())
+    print('goblin.health()=',goblin.health(1)) 
+    print('goblin.shares[]=',goblin.shares(1))  
+    print('goblin.shareToBalance(goblin.shares[])=',goblin.shareToBalance(goblin.shares(1)))  
+    
+    # test_token_1(bank, registry, 'sashimi')  # make sure remaining debt is not too small
+    # print('测试token ...')
+    # test_token(bank, registry, add_strat, liq_strat, rem_strat, 'sashimi')
+

@@ -155,11 +155,11 @@ contract Bank is Initializable, ERC20, ReentrancyGuardUpgradeSafe, Governable {
     // 3. Perform the actual work, using a new scope to avoid stack-too-deep errors.
     uint back;
     {
-      uint sendBNB = msg.value.add(loan);
-      require(sendBNB <= address(this).balance, 'insufficient BNB in the bank');
-      uint beforeBNB = address(this).balance.sub(sendBNB);
-      Goblin(goblin).work.value(sendBNB)(id, msg.sender, debt, data);
-      back = address(this).balance.sub(beforeBNB);
+      uint sendHT = msg.value.add(loan);
+      require(sendHT <= address(this).balance, 'insufficient BNB in the bank');
+      uint beforeHT = address(this).balance.sub(sendHT);
+      Goblin(goblin).work.value(sendHT)(id, msg.sender, debt, data);
+      back = address(this).balance.sub(beforeHT);
     }
     // 4. Check and update position debt.
     uint lessDebt = Math.min(debt, Math.min(back, maxReturn));
@@ -190,9 +190,9 @@ contract Bank is Initializable, ERC20, ReentrancyGuardUpgradeSafe, Governable {
     uint killFactor = config.killFactor(pos.goblin, debt);
     require(health.mul(killFactor) < debt.mul(10000), "can't liquidate");
     // 2. Perform liquidation and compute the amount of BNB received.
-    uint beforeBNB = address(this).balance;
+    uint beforeHT = address(this).balance;
     Goblin(pos.goblin).liquidate(id);
-    uint back = address(this).balance.sub(beforeBNB);
+    uint back = address(this).balance.sub(beforeHT);
     uint prize = back.mul(config.getKillBps()).div(10000);
     uint rest = back.sub(prize);
     // 3. Clear position debt and return funds to liquidator and position owner.
